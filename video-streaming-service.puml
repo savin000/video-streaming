@@ -1,0 +1,86 @@
+@startuml
+'configuration package
+class SecurityConfig {
++ SecurityFilterChain filterChain(HttpSecurity)
++ WebMvcConfigurer corsConfigurer()
+}
+
+'constants package
+class GlobalExceptionHandlerMessageConstant {
++ {static} String BASE_MESSAGE
++ {static} String ENTITY_NOT_FOUND_MESSAGE
+}
+class ControllerConstant {
++ {static} String ROOT_PATH
+}
+
+'controller package
+class VideoStreamingController {
+- VideoStreamingService service
++ Mono<Resource> getVideos(String,String,String)
+}
+class VideoController {
+- VideoService videoService
++ ResponseEntity<List<Video>> getVideosByUsername(String)
++ ResponseEntity<String> handleFileUpload(MultipartFile,String)
+}
+
+'entity package
+class VideoRequest {
+~ String title
+~ String username
+}
+abstract class AbstractEntity {
+- String id
+}
+class Video {
+~ String username
+~ String title
+~ String path
+}
+
+'repository package
+interface VideoRepository {
+~ List<Video> getAllByUsername(String)
+~ Optional<Video> findVideoByTitleAndUsername(String,String)
+}
+
+'service package
+class VideoService {
+- {static} String NO_VIDEO_FOUND
+- {static} String VIDEO_ALREADY_EXISTS
+- VideoRepository videoRepository
++ String addVideo(MultipartFile,VideoRequest)
++ List<Video> getVideosByUsername(String)
++ Video getVideoByTitleAndUsername(String,String)
+}
+class VideoStreamingService {
+- {static} String FORMAT
+- ResourceLoader resourceLoader
+- VideoService videoService
++ Mono<Resource> getVideo(String,String)
+}
+
+'application class
+class VideoStreamingApplication {
++ {static} void main(String[])
+}
+
+'exception package
+class GlobalExceptionHandler {
++ ResponseEntity<ErrorMessage> handleException(Exception)
+}
+
+'connections
+VideoStreamingApplication --> SecurityConfig : add configuration to context
+VideoStreamingApplication --> VideoController : init controller
+VideoStreamingApplication --> VideoStreamingController : init controller
+VideoStreamingApplication --> GlobalExceptionHandler : init exception handler
+
+VideoController ...> ControllerConstant : use constant for request path
+VideoStreamingController ...> ControllerConstant : use constant for request path
+GlobalExceptionHandler ...> GlobalExceptionHandlerMessageConstant : use constant for exception
+
+VideoService  ...> VideoRepository : use CRUD methods
+VideoStreamingService  ...> VideoService : get access to video
+@enduml
